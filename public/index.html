@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Shared Multiple Choice</title>
+</head>
+<body>
+  <h1>Shared Multiple Choice</h1>
+  <p>Select an option below. The choice will update in real-time for all users connected to this page.</p>
+
+  <form id="choices">
+    <label><input type="radio" name="choice" value="A">A</label><br>
+    <label><input type="radio" name="choice" value="B">B</label><br>
+    <label><input type="radio" name="choice" value="C">C</label><br>
+    <label><input type="radio" name="choice" value="D">D</label><br>
+  </form>
+
+  <script>
+    // Connect to the WebSocket on the same host/port
+    const ws = new WebSocket(`ws://${location.host}`);
+
+    // Listen for messages from the server
+    ws.addEventListener('message', (event) => {
+      const data = JSON.parse(event.data);
+
+      // Update the displayed choice if we receive an "update" message
+      if (data.type === 'update') {
+        document.querySelectorAll('input[name="choice"]').forEach(input => {
+          input.checked = (input.value === data.choice);
+        });
+      }
+    });
+
+    // Whenever a user changes the choice, notify the server
+    document.getElementById('choices').addEventListener('change', (event) => {
+      if (event.target.name === 'choice') {
+        ws.send(JSON.stringify({ type: 'choice', choice: event.target.value }));
+      }
+    });
+  </script>
+</body>
+</html>

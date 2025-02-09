@@ -1,0 +1,65 @@
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { WebSocketServer } from 'ws';
+
+// Create a simple HTTP server to serve the index.html file
+const server = http.createServer((req, res) => {
+  // Serve index.html from the "public" directory if requesting "/"
+  if (req.url === '/') {
+    const filePath = path.join(process.cwd(), 'public', 'index.html');
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(500);
+        return res.end('Error loading index.html');
+      }
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(data);
+    });
+  } else {
+    // Return 404 for other paths
+    res.writeHead(404);
+    res.end();
+  }
+});
+
+// Create the WebSocket server on top of our existing HTTP server
+const wss = new WebSocketServer({ server });
+
+// Store the current choice in memory
+let currentChoice = null;
+
+// Handle WebSocket connections
+wss.on('connection', (ws) => {
+  console.log('New client connected.');
+
+  // Immediately send the current choice state to the newly connected client
+  ws.send(JSON.stringify({ type: 'update', choice: currentChoice }));
+
+  // Listener for messages from this client
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message);
+  
+      // If the incoming data indicates a new choice, update and broadcast
+      if (data.type === 'choice') {
+        currentChoice = data.choice; // Update the server state
+
+        // Broadcast the updated choice to all connected clients
+        wss.clients.forEach((client) => {
+          if (client.readyState === ws.OPEN) {
+            client.send(JSON.stringify({ type: 'update', choice: currentChoice }));
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to parse message:', error);
+    }
+  });
+});
+
+// Start the server
+const PORT = 3000;
+server.listen(PORT, () => {
+  console.log(`Server listening on http://localhost:${PORT}`);
+});
