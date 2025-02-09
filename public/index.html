@@ -11,53 +11,100 @@
   <form id="choices"></form>
 
   <script>
-    // Fetch the config data from the server
-    fetch('/config')
-      .then(response => response.json())
-      .then(data => {
-        if(data['title']) {
-          const title1 = document.getElementById('title_title')
-          if(title1)
-            title1.textContent=data['title']
-          const title2 = document.getElementById('title_text')
-          if(title2)
-            title2.textContent=data['title']
-        }
-        const form = document.getElementById('choices');
-        data.rows.forEach(row => {
-          console.log("row",row)
-          const label = document.createElement('label');
-          label.textContent = row.label;
-          const input = document.createElement('input');
-          input.type = 'radio';
-          input.name = 'choice';
-          input.value = row.label; // Use label as the value to keep the actual value hidden
-          label.prepend(input);
-          form.appendChild(label);
-          form.appendChild(document.createElement('br'));
+    // Global reference
+    let ws = null;
+
+
+
+    // Define a single global event handler for form changes
+    function handleFormChange(event) {
+      if (event.target.name === 'choice' && ws && ws.readyState === WebSocket.OPEN) {
+        console.log({
+          "event": "ws.send",
+          event,
+          "target": event.target,
+          "data": { type: 'choice', choice: event.target.value }
         });
+        ws.send(JSON.stringify({ type: 'choice', choice: event.target.value }));
+      } else {
+        console.log({ "event": "unknown", event });
+      }
+    }
+
+    // Function to fetch config and build the page
+    function fetchAndConfigure() {
+      fetch('/config')
+        .then(response => response.json())
+        .then(data => {
+          // Update titles if present in config data
+          if (data.title) {
+            const title1 = document.getElementById('title_title');
+            if (title1) title1.textContent = data.title;
+            const title2 = document.getElementById('title_text');
+            if (title2) title2.textContent = data.title;
+          }
+
+          // Build the form of choices
+          const form = document.getElementById('choices');
+          form.innerHTML = '';  // Clear out any existing choices
+          data.rows.forEach(row => {
+            const label = document.createElement('label');
+            label.textContent = row.label;
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.name = 'choice';
+            input.value = row.label;
+            label.prepend(input);
+            form.appendChild(label);
+            form.appendChild(document.createElement('br'));
+          });
+
+          // Remove any existing change listener to avoid duplicates
+          form.removeEventListener('change', handleFormChange);
+
+          // Attach a single event listener for input changes
+          form.addEventListener('change', handleFormChange);
+        })
+        .catch((err) => {
+          console.error('Failed to fetch config:', err);
+        });
+    }
+
+    // WebSocket connection function
+    function connectWebSocket() {
+      ws = new WebSocket(`ws://${location.host}`);
+
+      ws.addEventListener('open', () => {
+        console.log('WebSocket connection opened');
+        // Re-fetch config if desired after opening
+        fetchAndConfigure();
       });
 
-    // Connect to the WebSocket on the same host/port
-    const ws = new WebSocket(`ws://${location.host}`);
+      ws.addEventListener('message', (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'update') {
+          // Update the displayed choice
+          document.querySelectorAll('input[name="choice"]').forEach(input => {
+            input.checked = (input.value === data.choice);
+          });
+        }
+      });
 
-    // Listen for messages from the server
-    ws.addEventListener('message', (event) => {
-      const data = JSON.parse(event.data);
+      // On connection close (removed reconnection logic)
+      ws.addEventListener('close', () => {
+        console.log('WebSocket closed');
+      });
 
-      // Update the displayed choice if we receive an "update" message
-      if (data.type === 'update') {
-        document.querySelectorAll('input[name="choice"]').forEach(input => {
-          input.checked = (input.value === data.choice);
-        });
-      }
-    });
+      // On error (removed reconnection logic)
+      ws.addEventListener('error', (error) => {
+        console.log('WebSocket error:', error);
+      });
+    }
 
-    // Whenever a user changes the choice, notify the server
-    document.getElementById('choices').addEventListener('change', (event) => {
-      if (event.target.name === 'choice') {
-        ws.send(JSON.stringify({ type: 'choice', choice: event.target.value }));
-      }
+    // On page load, fetch config and connect the WebSocket
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchAndConfigure();
+      connectWebSocket();
     });
   </script>
 </body>
