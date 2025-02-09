@@ -2,6 +2,18 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { WebSocketServer } from 'ws';
+import yaml from 'js-yaml';
+
+// Load and parse the config.yaml file
+const configPath = path.join(process.cwd(), 'config.yaml');
+let configData;
+
+try {
+  const fileContents = fs.readFileSync(configPath, 'utf8');
+  configData = yaml.load(fileContents);
+} catch (e) {
+  console.error('Error reading config.yaml:', e);
+}
 
 // Create a simple HTTP server to serve the index.html file
 const server = http.createServer((req, res) => {
@@ -16,6 +28,10 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(data);
     });
+  } else if (req.url === '/config') {
+    // Send the config data as JSON
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(configData));
   } else {
     // Return 404 for other paths
     res.writeHead(404);

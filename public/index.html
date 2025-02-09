@@ -8,14 +8,28 @@
   <h1>Shared Multiple Choice</h1>
   <p>Select an option below. The choice will update in real-time for all users connected to this page.</p>
 
-  <form id="choices">
-    <label><input type="radio" name="choice" value="A">A</label><br>
-    <label><input type="radio" name="choice" value="B">B</label><br>
-    <label><input type="radio" name="choice" value="C">C</label><br>
-    <label><input type="radio" name="choice" value="D">D</label><br>
-  </form>
+  <form id="choices"></form>
 
   <script>
+    // Fetch the config data from the server
+    fetch('/config')
+      .then(response => response.json())
+      .then(data => {
+        const form = document.getElementById('choices');
+        data.rows.forEach(row => {
+          console.log("row",row)
+          const label = document.createElement('label');
+          label.textContent = row.label;
+          const input = document.createElement('input');
+          input.type = 'radio';
+          input.name = 'choice';
+          input.value = row.label; // Use label as the value to keep the actual value hidden
+          label.prepend(input);
+          form.appendChild(label);
+          form.appendChild(document.createElement('br'));
+        });
+      });
+
     // Connect to the WebSocket on the same host/port
     const ws = new WebSocket(`ws://${location.host}`);
 

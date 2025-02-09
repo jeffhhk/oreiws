@@ -1,0 +1,15 @@
+# outputs: 1=zoom, 2=projector 3=projector 2, 4=n/a
+# inputs: 1=slides, 2=speaker, 3=music, 4=zoom
+# Mnemonic: SwS: "Switch setting"
+# write each sws as:
+#  [input for output 1, input for output 2, ...]
+
+device_path:
+  /dev/serial/by-id/usb-FTDI_USB_Serial_Converter_FTB6SPL3-if00-port0
+rows:
+  - label: speaker
+    sws: [2,1,1,1]
+  - label: music
+    sws: [3,1,1,1]
+  - label: discussion
+    sws: [2,4,4,1]
