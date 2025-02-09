@@ -2,10 +2,10 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Shared Multiple Choice</title>
+  <title id="title_title">Shared Multiple Choice</title>
 </head>
 <body>
-  <h1>Shared Multiple Choice</h1>
+  <h1 id="title_text">Shared Multiple Choice</h1>
   <p>Select an option below. The choice will update in real-time for all users connected to this page.</p>
 
   <form id="choices"></form>
@@ -15,6 +15,14 @@
     fetch('/config')
       .then(response => response.json())
       .then(data => {
+        if(data['title']) {
+          const title1 = document.getElementById('title_title')
+          if(title1)
+            title1.textContent=data['title']
+          const title2 = document.getElementById('title_text')
+          if(title2)
+            title2.textContent=data['title']
+        }
         const form = document.getElementById('choices');
         data.rows.forEach(row => {
           console.log("row",row)
