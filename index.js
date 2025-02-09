@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { WebSocketServer } from 'ws';
 import yaml from 'js-yaml';
+import HDMI_Matrix from './lib/hdmi_matrix.mjs';
 
 // Load and parse the config.yaml file
 const configPath = path.join(process.cwd(), 'config.yaml');
@@ -14,6 +15,8 @@ try {
 } catch (e) {
   console.error('Error reading config.yaml:', e);
 }
+
+let matrix = new HDMI_Matrix(configData['device_path'])
 
 // Create a simple HTTP server to serve the index.html file
 const server = http.createServer((req, res) => {
@@ -59,7 +62,11 @@ wss.on('connection', (ws) => {
   
       // If the incoming data indicates a new choice, update and broadcast
       if (data.type === 'choice') {
-        currentChoice = data.choice; // Update the server state
+        let rows = Array.from(configData["rows"]).filter(r => r["label"] == data.choice && r["sws"])
+        if(rows.length > 0) {
+          currentChoice = data.choice; // Update the server state
+          matrix.write(rows[0]["sws"])
+        }
 
         // Broadcast the updated choice to all connected clients
         wss.clients.forEach((client) => {
