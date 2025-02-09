@@ -5,15 +5,28 @@
   <title id="title_title">Shared Multiple Choice</title>
 </head>
 <body>
+  <!-- Reconnect Banner -->
+  <div id="reconnectBanner" style="display:none; background: #fff4a3; padding: 1em; font-weight: bold;">
+    Trying to reconnect...
+  </div>
+
   <h1 id="title_text">Shared Multiple Choice</h1>
   <p>Select an option below. The choice will update in real-time for all users connected to this page.</p>
 
   <form id="choices"></form>
 
   <script>
-    // Global reference
+    // Global references
     let ws = null;
+    let reconnectInterval = null;
 
+    // Helper to show and hide the reconnect banner
+    function showReconnect() {
+      const reconnect = document.getElementById('reconnectBanner');
+      if (reconnect) {
+        reconnect.style.display = 'block';
+      }
+    }
 
 
     // Define a single global event handler for form changes
@@ -30,6 +43,12 @@
         console.log({ "event": "unknown", event });
       }
     }
+    function hideReconnect() {
+      const reconnect = document.getElementById('reconnectBanner');
+      if (reconnect) {
+        reconnect.style.display = 'none';
+      }
+    }
 
     // Function to fetch config and build the page
     function fetchAndConfigure() {
@@ -37,11 +56,11 @@
         .then(response => response.json())
         .then(data => {
           // Update titles if present in config data
-          if (data.title) {
+          if (data['title']) {
             const title1 = document.getElementById('title_title');
-            if (title1) title1.textContent = data.title;
+            if (title1) title1.textContent = data['title'];
             const title2 = document.getElementById('title_text');
-            if (title2) title2.textContent = data.title;
+            if (title2) title2.textContent = data['title'];
           }
 
           // Build the form of choices
@@ -70,16 +89,24 @@
         });
     }
 
-    // WebSocket connection function
     function connectWebSocket() {
+      // Create a new WebSocket
       ws = new WebSocket(`ws://${location.host}`);
 
+      // When the connection opens successfully
       ws.addEventListener('open', () => {
         console.log('WebSocket connection opened');
-        // Re-fetch config if desired after opening
+        hideReconnect();
+        // Clear the reconnect interval if it is set
+        if (reconnectInterval) {
+          clearInterval(reconnectInterval);
+          reconnectInterval = null;
+        }
+        // Re-fetch config (reconfigure) if desired
         fetchAndConfigure();
       });
 
+      // Listen for messages from the server
       ws.addEventListener('message', (event) => {
         const data = JSON.parse(event.data);
         if (data.type === 'update') {
@@ -90,12 +117,20 @@
         }
       });
 
-      // On connection close (removed reconnection logic)
+      // When the connection closes
       ws.addEventListener('close', () => {
         console.log('WebSocket closed');
+        showReconnect();
+        // If not already trying to reconnect, set interval to try every 5 seconds
+        if (!reconnectInterval) {
+          reconnectInterval = setInterval(() => {
+            console.log('Attempting to reconnect...');
+            connectWebSocket();
+          }, 5000);
+        }
       });
 
-      // On error (removed reconnection logic)
+      // If an error occurs
       ws.addEventListener('error', (error) => {
         console.log('WebSocket error:', error);
       });
