@@ -50,6 +50,17 @@
       }
     }
 
+    function selectFromSws(data, sws) {
+      const matchedRow = data.rows.find(r => JSON.stringify(r.sws) === JSON.stringify(sws));
+      if (matchedRow) {
+        let label = matchedRow.label
+        // check all choices with a matching label
+        document.querySelectorAll('input[name="choice"]').forEach(input => {
+          input.checked = (input.value === label);
+        });
+      }
+    }
+
     // Function to fetch config and build the page
     function fetchAndConfigure() {
       fetch('/config')
@@ -88,13 +99,7 @@
             .then(resp => resp.json())
             .then(respSws => {
               if (respSws.event === 'OK' && respSws.sws) {
-                const readSws = respSws.sws;
-                const matchedRow = data.rows.find(r => JSON.stringify(r.sws) === JSON.stringify(readSws));
-                if (matchedRow) {
-                  document.querySelectorAll('input[name="choice"]').forEach(input => {
-                    input.checked = (input.value === matchedRow.label);
-                  });
-                }
+                this.selectFromSws(data, respSws.sws)
               }
             });
         })
