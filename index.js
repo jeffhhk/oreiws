@@ -3,7 +3,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { WebSocketServer } from 'ws';
 import yaml from 'js-yaml';
+import pino from 'pino';
 import HDMI_Matrix from './lib/hdmi_matrix.mjs';
+const logger = pino({
+    timestamp: pino.stdTimeFunctions.isoTime
+  });
 
 // Load and parse the config.yaml file
 const configPath = path.join(process.cwd(), 'config.yaml');
@@ -13,7 +17,7 @@ try {
   const fileContents = fs.readFileSync(configPath, 'utf8');
   configData = yaml.load(fileContents);
 } catch (e) {
-  console.error('Error reading config.yaml:', e);
+  logger.error({'event':'Error reading config.yaml:', e});
 }
 
 let matrix = new HDMI_Matrix(configData['device_path'])
@@ -55,7 +59,7 @@ let currentChoice = null;
 
 // Handle WebSocket connections
 wss.on('connection', (ws) => {
-  console.log('New client connected.');
+  logger.info({'event':'New client connected.'});
 
   // Immediately send the current choice state to the newly connected client
   ws.send(JSON.stringify({ type: 'update', choice: currentChoice }));
@@ -81,7 +85,7 @@ wss.on('connection', (ws) => {
         });
       }
     } catch (error) {
-      console.error('Failed to parse message:', error);
+      logger.error({'event':'Failed to parse message:', error});
     }
   });
 });
@@ -89,5 +93,5 @@ wss.on('connection', (ws) => {
 // Start the server
 const PORT = 3000;
 server.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+  logger.info({'event':`Server listening on http://localhost:${PORT}`});
 });
