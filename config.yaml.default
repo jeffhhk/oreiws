@@ -8,7 +8,7 @@ title:
   Video Switch
 device_path:
   /dev/serial/by-id/usb-FTDI_USB_Serial_Converter_FTB6SPL3-if00-port0
-rows:
+choices:
   - label: speaker
     sws: [2,1,1,1]
   - label: music

@@ -51,9 +51,9 @@
     }
 
     function selectFromSws(data, sws) {
-      const matchedRow = data.rows.find(r => JSON.stringify(r.sws) === JSON.stringify(sws));
-      if (matchedRow) {
-        let label = matchedRow.label
+      const choices = data.choices.find(r => JSON.stringify(r.sws) === JSON.stringify(sws));
+      if (choices) {
+        let label = choices.label
         // check all choices with a matching label
         document.querySelectorAll('input[name="choice"]').forEach(input => {
           input.checked = (input.value === label);
@@ -77,7 +77,7 @@
           // Build the form of choices
           const form = document.getElementById('choices');
           form.innerHTML = '';  // Clear out any existing choices
-          data.rows.forEach(row => {
+          data.choices.forEach(row => {
             const label = document.createElement('label');
             label.textContent = row.label;
             const input = document.createElement('input');

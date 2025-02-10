@@ -71,10 +71,10 @@ wss.on('connection', (ws) => {
   
       // If the incoming data indicates a new choice, update and broadcast
       if (data.type === 'choice') {
-        let rows = Array.from(configData["rows"]).filter(r => r["label"] == data.choice && r["sws"]);
-        if(rows.length > 0) {
+        let choices = Array.from(configData["choices"]).filter(r => r["label"] == data.choice && r["sws"]);
+        if(choices.length > 0) {
           currentChoice = data.choice;
-          matrix.write(rows[0]["sws"]);
+          matrix.write(choices[0]["sws"]);
         }
 
         // Broadcast the updated choice to all connected clients
