@@ -35,6 +35,11 @@ const server = http.createServer((req, res) => {
     // Send the config data as JSON
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(configData));
+  } else if (req.url === '/sws') {
+    matrix.read((respSws) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(respSws));
+    });
   } else {
     // Return 404 for other paths
     res.writeHead(404);
@@ -62,10 +67,10 @@ wss.on('connection', (ws) => {
   
       // If the incoming data indicates a new choice, update and broadcast
       if (data.type === 'choice') {
-        let rows = Array.from(configData["rows"]).filter(r => r["label"] == data.choice && r["sws"])
+        let rows = Array.from(configData["rows"]).filter(r => r["label"] == data.choice && r["sws"]);
         if(rows.length > 0) {
-          currentChoice = data.choice; // Update the server state
-          matrix.write(rows[0]["sws"])
+          currentChoice = data.choice;
+          matrix.write(rows[0]["sws"]);
         }
 
         // Broadcast the updated choice to all connected clients

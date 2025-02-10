@@ -83,6 +83,20 @@
 
           // Attach a single event listener for input changes
           form.addEventListener('change', handleFormChange);
+
+          fetch('/sws')
+            .then(resp => resp.json())
+            .then(respSws => {
+              if (respSws.event === 'OK' && respSws.sws) {
+                const readSws = respSws.sws;
+                const matchedRow = data.rows.find(r => JSON.stringify(r.sws) === JSON.stringify(readSws));
+                if (matchedRow) {
+                  document.querySelectorAll('input[name="choice"]').forEach(input => {
+                    input.checked = (input.value === matchedRow.label);
+                  });
+                }
+              }
+            });
         })
         .catch((err) => {
           console.error('Failed to fetch config:', err);
