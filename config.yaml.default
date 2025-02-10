@@ -1,5 +1,7 @@
-# outputs: 1=zoom, 2=projector 3=projector 2, 4=n/a
-# inputs: 1=slides, 2=speaker, 3=music, 4=zoom
+# OREI UHD-404R HDMI Matrix Switch
+
+# output configuration: represented as a list of 4 elements
+# input configuration: represented as numbers 1-4
 # Mnemonic: SwS: "Switch setting"
 # write each sws as:
 #  [input for output 1, input for output 2, ...]
